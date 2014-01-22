@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>001-instagram-subscription-calculator</title>
+        <meta name="description" content="works out how many instagram real-time subscriptions (max radius: 5000 meters) are needed to fill a polygon drawn on google maps, and gives you their centre point latitudes and longitudes">
+        <meta name="viewport" content="width=device-width">
+
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?libraries=drawing&sensor=false"></script>
+        <script src="js.js"></script>
+        <link rel="stylesheet" href="css.css" />
+    </head>
+    <body>
+        <div id="map-canvas"></div>
+        <div id="results">
+            <h3>polygon points</h3>
+            <div id="polygonPoints">
+            </div>
+
+            <h3>circle points</h3>
+            <div id="circlePoints">
+            </div>
+        </div>
+</body>
+</html>
