@@ -1,6 +1,7 @@
 function generate_circle_centers(lat, lng, radius) {
 
-    // FIRST DRAW A RECTANGLE AROUND THE POLYGON, BASED ON ITS WIDEST POINTS. // THEN SPLIT IT INTO A GRID BASED ON THE SIZE OF THE INSTAGRAM MAX
+    // FIRST DRAW A RECTANGLE AROUND THE  POLYGON, BASED ON ITS WIDEST POINTS.
+    // THEN SPLIT IT INTO A GRID BASED ON THE SIZE OF THE INSTAGRAM MAX
     // SUBSCRIPTION DISTANCE: 5000 METRES
 
     // One side of a unit of the grid measures the distance of the side of the
@@ -8,11 +9,12 @@ function generate_circle_centers(lat, lng, radius) {
     var unit = (2 * 5000) / Math.sqrt(2)
 
     // Find bounds of the grid. Bounds exceed desired radius by less
-    // than one unit.
+    // than one unit, so we can overlap the circles to get complete
+    // coverage of the area.
     var x_max = y_max = parseInt(Math.ceil(radius / unit))
 
-    // Generate centers for the grid without considering latitude
-    // or longitude yet.
+    // Generate centers for the grid (doesn't take into account latitude
+    // or longitude yet).
     var pts = [];
     for (i  = -x_max; i < x_max+1; i++) {
         for (j  = -y_max; j < y_max+1; j++) {
@@ -32,12 +34,12 @@ function generate_circle_centers(lat, lng, radius) {
       return angle * (Math.PI / 180);
     }
 
-    // useful hard maths to map the centers to lat lng values, in degrees.
+    // useful hard maths to map the centers to lat values, in degrees.
     lng_change = function(x, lat1, lat2) {
-        return toDegrees( x / ( 6371000 * Math.cos( toRadians( (lat1 + lat2) / 2 ) ) ) )
+        return toDegrees(x/(6371000 * Math.cos(toRadians((lat1+lat2)/2))))
     }
 
-    // same as above
+    // same as above but for lng
     lat_change = function(y) {
         return toDegrees(y/6371000)
     }
@@ -45,7 +47,8 @@ function generate_circle_centers(lat, lng, radius) {
     // create an array to hold our subscription circle centre points  
     centers = [];
 
-    // look at each circle. if the centre 
+    // look at each circle. if the centroid is outside the polygon, don't
+    // use it.
     for(i = 0; i < pts.length; i++) {
         var x = pts[i][1];
         var y = pts[i][0];
@@ -53,6 +56,7 @@ function generate_circle_centers(lat, lng, radius) {
             continue;
         }
     
+        // else store it for later.
         centers.push( [
                 lat_change(y) + lat,
                 lng_change(x, lat, lat+lat_change(y)) + lng
@@ -63,9 +67,9 @@ function generate_circle_centers(lat, lng, radius) {
     // DRAW CIRCLES!
     for(i = 0; i < centers.length; i++){
 
-        var circleCentre = new google.maps.LatLng( centers[i][0], centers[i][1] )
+        var circleCentre = new google.maps.LatLng(centers[i][0], centers[i][1])
 
-        if ( google.maps.geometry.poly.containsLocation( circleCentre, drawnPolygon) || bdccGeoDistanceToPolyMtrs(drawnPolygon, circleCentre) < unit ) {
+        if(google.maps.geometry.poly.containsLocation(circleCentre,drawnPolygon) || bdccGeoDistanceToPolyMtrs(drawnPolygon, circleCentre) < unit ) {
 
             cityCircle = new google.maps.Circle({
                 strokeColor: '#999',
@@ -87,7 +91,14 @@ function generate_circle_centers(lat, lng, radius) {
 
 
 
-
+/*
+*
+*   taken from Bill Chadwick's "DISTANCE POINT TO POLYLINE OR POLYGON" script
+*   here: http://www.bdcc.co.uk/Gmaps/BdccGmapBits.htm
+*
+*   i updated it to use Google Maps API v3.
+*
+*/
 
 // Code to find the distance in metres between a lat/lng point and a polyline
 // of lat/lng points
@@ -96,8 +107,7 @@ function generate_circle_centers(lat, lng, radius) {
 // Bill Chadwick 2007
         
 // Construct a bdccGeo from its latitude and longitude in degrees
-function bdccGeo(lat, lon) 
-{
+function bdccGeo(lat, lon) {
     var theta = (lon * Math.PI / 180.0);
     var rlat = bdccGeoGeocentricLatitude(lat * Math.PI / 180.0);
     var c = Math.cos(rlat); 
@@ -111,12 +121,12 @@ bdccGeo.prototype = new bdccGeo();
 
 // Methods =================================================
 
-//Maths
+// Maths
 bdccGeo.prototype.dot = function( b) {
     return ((this.x * b.x) + (this.y * b.y) + (this.z * b.z));
 }
 
-//More Maths
+// More Maths
 bdccGeo.prototype.scale = function( s) {
     var r = new bdccGeo(0,0);
     r.x = this.x * s;
@@ -138,13 +148,13 @@ bdccGeo.prototype.antipode = function() {
 
 // internal helper functions =========================================
 
-//from Radians to Meters
+// from Radians to Meters
 function bdccGeoRadiansToMeters(rad) {
     return rad * 6378137.0; // WGS84 Equatorial Radius in Meters
 }
 
 
-//More Maths
+// Yet More Maths
 bdccGeo.prototype.crossLength = function( b) {
     var x = (this.y * b.z) - (this.z * b.y);
     var y = (this.z * b.x) - (this.x * b.z);
@@ -159,6 +169,7 @@ function bdccGeoGeocentricLatitude(geographicLatitude) {
     return Math.atan((Math.tan(geographicLatitude) * f));
 }
 
+// REALLY HARD MATHS
 // Returns the two antipodal points of intersection of two great
 // circles defined by the arcs geo1 to geo2 and
 // geo3 to geo4. Returns a point as a Geo, use .antipode to get the other point
@@ -168,7 +179,7 @@ function bdccGeoGetIntersection( geo1,  geo2,  geo3,  geo4) {
     return geoCross1.crossNormalize(geoCross2);
 }
 
-// More Maths
+// Jesus Christ! How much maths do we need?
 bdccGeo.prototype.crossNormalize = function( b) {
     var x = (this.y * b.z) - (this.z * b.y);
     var y = (this.z * b.x) - (this.x * b.z);
@@ -180,6 +191,8 @@ bdccGeo.prototype.crossNormalize = function( b) {
     r.z = z / L;
     return r;
 }
+
+// Very little idea what's happening here but it seems to do the job:
 
 // returns in meters the minimum of the perpendicular distance of this point
 // from the line segment geo1-geo2
@@ -279,6 +292,7 @@ function initialize() {
             polygonPoints.push( [ latlng.lat(), latlng.lng() ]);
         });
 
+        // should probably use a DOM lib to do this properly
         document.getElementById('polygonPoints').innerText = polygonPoints.join('\n');
             
         // get diameter of polygon
@@ -291,6 +305,7 @@ function initialize() {
     });
 }
 
+// when the page is ready, load the map and setup listeners for polygon drawing
 google.maps.event.addDomListener(window, 'load', initialize);
 
 
