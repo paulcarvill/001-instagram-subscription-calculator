@@ -263,6 +263,7 @@ function initialize() {
     map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
 
     var drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
         drawingControlOptions: {
           position: google.maps.ControlPosition.TOP_LEFT,
           drawingModes: [
